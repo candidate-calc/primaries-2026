@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>פריימריז הדמוקרטים 2026 — מחשבון דירוג מועמדים</title>
+<script src="marked.min.js"></script>
+<script src="data.js"></script>
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#ffffff; --ink:#1c2b33; --muted:#5b7083; --line:#dde4e9;
+    --accent:#1f4e5f; --accent2:#2e7d6b; --top:#e2efda; --bar:#4c9a8f; --bad:#c0392b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:var(--accent);color:#fff;padding:14px 22px}
+  header h1{margin:0;font-size:1.25rem}
+  header .sub{font-size:.85rem;opacity:.85;margin-top:4px}
+  nav.tabs{display:flex;gap:6px;background:var(--accent);padding:0 16px}
+  nav.tabs button{border:0;background:rgba(255,255,255,.12);color:#fff;padding:9px 18px;
+    border-radius:8px 8px 0 0;cursor:pointer;font-size:.95rem;font-family:inherit}
+  nav.tabs button.active{background:var(--bg);color:var(--ink);font-weight:600}
+  main{max-width:1200px;margin:0 auto;padding:18px}
+  .tab{display:none} .tab.active{display:block}
+
+  /* ranking layout */
+  .layout{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h3{margin:0 0 10px;font-size:1rem;color:var(--accent)}
+  .slider-row{display:grid;grid-template-columns:1fr 90px 34px;align-items:center;gap:8px;margin:7px 0}
+  .slider-row label{font-size:.85rem}
+  .slider-row input[type=range]{width:100%;accent-color:var(--accent2)}
+  .slider-row .val{font-size:.85rem;font-weight:600;text-align:center;background:var(--bg);border-radius:6px;padding:2px 0}
+  details{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+  details summary{cursor:pointer;font-size:.9rem;color:var(--accent);font-weight:600}
+  .btnrow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  button.act{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 14px;
+    cursor:pointer;font-family:inherit;font-size:.85rem}
+  button.act:hover{background:var(--line)}
+
+  table.rank{width:100%;border-collapse:collapse;font-size:.92rem}
+  table.rank th{position:sticky;top:0;background:var(--accent);color:#fff;padding:8px 6px;font-size:.82rem}
+  table.rank td{padding:7px 6px;border-bottom:1px solid var(--line)}
+  tr.top8 td{background:var(--top)}
+  .namebtn{background:none;border:0;color:var(--accent);cursor:pointer;font-family:inherit;
+    font-size:.92rem;text-decoration:underline;padding:0}
+  .scorebar{background:var(--bg);border-radius:5px;height:14px;min-width:110px;overflow:hidden}
+  .scorebar>div{height:100%;background:var(--bar)}
+  .ev{display:inline-block;min-width:34px;text-align:center;border-radius:10px;font-size:.78rem;padding:1px 6px;color:#fff}
+  .detail-row td{background:#fbfcfd;font-size:.8rem}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;padding:4px 0}
+  .chip{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:2px 9px}
+  .note{font-size:.8rem;color:var(--muted);margin-top:8px}
+
+  /* docs / dossiers */
+  .doclayout{display:grid;grid-template-columns:260px 1fr;gap:18px;align-items:start}
+  @media(max-width:900px){.doclayout{grid-template-columns:1fr}}
+  .doclist button{display:block;width:100%;text-align:right;border:0;background:none;padding:7px 10px;
+    cursor:pointer;font-family:inherit;font-size:.88rem;border-radius:8px;color:var(--ink)}
+  .doclist button.active{background:var(--accent);color:#fff}
+  .doclist input{width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;font-family:inherit}
+  .mdbody{line-height:1.65}
+  .mdbody h1{font-size:1.35rem;color:var(--accent)} .mdbody h2{font-size:1.1rem;color:var(--accent)}
+  .mdbody table{border-collapse:collapse;margin:10px 0;font-size:.88rem}
+  .mdbody th,.mdbody td{border:1px solid var(--line);padding:6px 10px}
+  .mdbody th{background:var(--bg)}
+  .mdbody code{background:var(--bg);padding:1px 5px;border-radius:4px;font-size:.85em}
+  .mdbody pre{background:var(--bg);padding:12px;border-radius:8px;overflow-x:auto}
+  .mdbody blockquote{border-right:4px solid var(--accent2);margin:8px 0;padding:4px 12px;color:var(--muted)}
+  footer{max-width:1200px;margin:10px auto 30px;padding:0 18px;font-size:.78rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>פריימריז הדמוקרטים 2026 — מחשבון דירוג מועמדים</h1>
+  <div class="sub">ההצבעה: 20.7.2026 · בוחרים 6–8 מתוך 51 מועמדים · הנתונים נאספו ב־6.7.2026 ·
+    <a href="primaries-scoring.xlsx" style="color:#cde">הורדת גיליון האקסל</a></div>
+</header>
+<nav class="tabs">
+  <button data-tab="rank" class="active">דירוג אינטראקטיבי</button>
+  <button data-tab="dossiers">תיקי המועמדים</button>
+  <button data-tab="method">השיטה והמקורות</button>
+</nav>
+<main>
+
+<section id="tab-rank" class="tab active">
+  <div class="layout">
+    <div>
+      <div class="card">
+        <h3>משקלי הנושאים (0–10)</h3>
+        <div id="sl-topics"></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>משקלי התכונות (0–10)</h3>
+        <div id="sl-traits"></div>
+        <details>
+          <summary>הגדרות מתקדמות</summary>
+          <h3 style="margin-top:10px">משקלי ממדי נושא</h3>
+          <div id="sl-tdims"></div>
+          <h3 style="margin-top:10px">משקלי ממדי תכונה</h3>
+          <div id="sl-cdims"></div>
+          <h3 style="margin-top:10px">כללי</h3>
+          <div id="sl-global"></div>
+        </details>
+        <div class="btnrow">
+          <button class="act" id="btn-reset">איפוס לברירת מחדל</button>
+        </div>
+        <div class="note">ההגדרות נשמרות אוטומטית בדפדפן שלך בלבד.</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>הדירוג לפי ההעדפות שלך <span id="warn" style="color:var(--bad);font-size:.8rem"></span></h3>
+      <table class="rank">
+        <thead><tr><th>#</th><th>מועמד/ת</th><th style="width:130px">ציון</th><th>0–100</th><th>נושאים</th><th>תכונות</th><th>ביסוס</th><th></th></tr></thead>
+        <tbody id="rankbody"></tbody>
+      </table>
+      <div class="note">ירוק = שמונת הראשונים (בפריימריז מצביעים ל־6–8). הדירוגים הם שיפוט מנומק על סמך המקורות שנאספו — פירוט מלא בתיקי המועמדים. עמודת "ביסוס" = כמה המידע נשען על מקורות חיצוניים (5) לעומת עדות עצמית בלבד (1).</div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-dossiers" class="tab">
+  <div class="doclayout">
+    <div class="card doclist">
+      <input id="dsearch" type="search" placeholder="חיפוש מועמד/ת…">
+      <div id="dbuttons" style="max-height:70vh;overflow-y:auto"></div>
+    </div>
+    <div class="card mdbody" id="dossier-view">בחרו מועמד/ת מהרשימה.</div>
+  </div>
+</section>
+
+<section id="tab-method" class="tab">
+  <div class="doclayout">
+    <div class="card doclist" id="mbuttons"></div>
+    <div class="card mdbody" id="method-view"></div>
+  </div>
+</section>
+
+</main>
+<footer>
+  הדירוגים המספריים הם שיפוט מנומק על בסיס מקורות מתויגי־אמינות (נכון ל־6.7.2026), לא מדידה אובייקטיבית.
+  הפרויקט המלא — כולל תוכנית הפעולה, מסגרת אמינות המקורות וכל תיקי המועמדים — זמין בריפו.
+</footer>
+<script>
+const D = window.PRIMARIES_DATA;
+const LS_KEY = 'primaries-params-v1';
+const state = load() || structuredClone(D.defaults);
+
+function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch(e){ return null; } }
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+
+/* ---------- sliders ---------- */
+function sliderRow(label, value, min, max, step, onchange){
+  const row = document.createElement('div'); row.className='slider-row';
+  const lab = document.createElement('label'); lab.textContent = label;
+  const inp = document.createElement('input');
+  inp.type='range'; inp.min=min; inp.max=max; inp.step=step; inp.value=value;
+  const val = document.createElement('div'); val.className='val'; val.textContent = value;
+  inp.addEventListener('input', ()=>{ val.textContent = inp.value; onchange(parseFloat(inp.value)); save(); render(); });
+  row.append(lab, inp, val);
+  row._set = v => { inp.value=v; val.textContent=v; };
+  return row;
+}
+const slRefs = {wT:[], wC:[], alpha:[], gamma:[], lam:null, beta:null};
+function buildSliders(){
+  const t = document.getElementById('sl-topics'); t.innerHTML='';
+  D.topics.forEach((name,i)=>{ const r=sliderRow(name, state.wT[i],0,10,0.5, v=>state.wT[i]=v); slRefs.wT[i]=r; t.append(r); });
+  const c = document.getElementById('sl-traits'); c.innerHTML='';
+  D.traits.forEach((name,i)=>{ const r=sliderRow(name, state.wC[i],0,10,0.5, v=>state.wC[i]=v); slRefs.wC[i]=r; c.append(r); });
+  const td = document.getElementById('sl-tdims'); td.innerHTML='';
+  D.tdims.forEach((name,i)=>{ const r=sliderRow(name, state.alpha[i],0,10,0.5, v=>state.alpha[i]=v); slRefs.alpha[i]=r; td.append(r); });
+  const cd = document.getElementById('sl-cdims'); cd.innerHTML='';
+  D.cdims.forEach((name,i)=>{ const r=sliderRow(name, state.gamma[i],0,10,0.5, v=>state.gamma[i]=v); slRefs.gamma[i]=r; cd.append(r); });
+  const g = document.getElementById('sl-global'); g.innerHTML='';
+  slRefs.lam = sliderRow('λ — נושאים מול תכונות', state.lam,0,1,0.05, v=>state.lam=v);
+  slRefs.beta = sliderRow('β — קנס על ביסוס נמוך', state.beta,0,0.5,0.05, v=>state.beta=v);
+  g.append(slRefs.lam, slRefs.beta);
+}
+document.getElementById('btn-reset').addEventListener('click', ()=>{
+  Object.assign(state, structuredClone(D.defaults));
+  slRefs.wT.forEach((r,i)=>r._set(state.wT[i])); slRefs.wC.forEach((r,i)=>r._set(state.wC[i]));
+  slRefs.alpha.forEach((r,i)=>r._set(state.alpha[i])); slRefs.gamma.forEach((r,i)=>r._set(state.gamma[i]));
+  slRefs.lam._set(state.lam); slRefs.beta._set(state.beta);
+  save(); render();
+});
+
+/* ---------- scoring (מקביל לנוסחת האקסל) ---------- */
+function wavg(vals, weights){
+  let s=0, w=0;
+  for(let i=0;i<vals.length;i++){ s+=vals[i]*weights[i]; w+=weights[i]; }
+  return w>0 ? s/w : 0;
+}
+function scoreAll(){
+  const sumWT = state.wT.reduce((a,b)=>a+b,0), sumWC = state.wC.reduce((a,b)=>a+b,0);
+  document.getElementById('warn').textContent =
+    (sumWT===0||sumWC===0) ? ' (אזהרה: כל המשקלים בקבוצה כלשהי הם 0)' : '';
+  return D.candidates.map(c=>{
+    const St = c.T.map(dims=>wavg(dims, state.alpha));
+    const TOP = sumWT>0 ? St.reduce((a,s,i)=>a+s*state.wT[i],0)/sumWT : 0;
+    const Qc = c.C.map(dims=>wavg(dims, state.gamma));
+    const CHR = sumWC>0 ? Qc.reduce((a,s,i)=>a+s*state.wC[i],0)/sumWC : 0;
+    const F = (state.lam*TOP + (1-state.lam)*CHR) * (1 - state.beta*(5-c.ev)/4);
+    return {c, St, Qc, TOP, CHR, F, score: Math.max(0,(F-1)/4*100)};
+  }).sort((a,b)=>b.F-a.F);
+}
+
+/* ---------- render ranking ---------- */
+function evColor(ev){ return ev>=4 ? '#2e7d6b' : ev>=3 ? '#8a9a3d' : '#c07f30'; }
+function render(){
+  const rows = scoreAll();
+  const tb = document.getElementById('rankbody'); tb.innerHTML='';
+  const max = rows[0] ? Math.max(rows[0].score, 1) : 1;
+  rows.forEach((r,idx)=>{
+    const tr = document.createElement('tr'); if(idx<8) tr.className='top8';
+    tr.innerHTML = `<td>${idx+1}</td>
+      <td><button class="namebtn" data-id="${r.c.id}">${r.c.name}</button></td>
+      <td><div class="scorebar"><div style="width:${(r.score/max*100).toFixed(1)}%"></div></div></td>
+      <td><b>${r.score.toFixed(1)}</b></td>
+      <td>${r.TOP.toFixed(2)}</td><td>${r.CHR.toFixed(2)}</td>
+      <td><span class="ev" style="background:${evColor(r.c.ev)}">${r.c.ev}</span></td>
+      <td><button class="act" style="padding:2px 8px" data-exp="${r.c.id}">פירוט</button></td>`;
+    tb.append(tr);
+    const dr = document.createElement('tr'); dr.className='detail-row'; dr.style.display='none';
+    const chips = D.topics.map((t,i)=>`<span class="chip">${t}: <b>${r.St[i].toFixed(1)}</b></span>`).join('') +
+      '<br>' + D.traits.map((t,i)=>`<span class="chip">${t}: <b>${r.Qc[i].toFixed(1)}</b></span>`).join('');
+    dr.innerHTML = `<td></td><td colspan="7"><div class="chips">${chips}</div></td>`;
+    tb.append(dr);
+    tr.querySelector('[data-exp]').addEventListener('click', ()=>{
+      dr.style.display = dr.style.display==='none' ? '' : 'none';
+    });
+    tr.querySelector('.namebtn').addEventListener('click', ()=>openDossier(r.c.id));
+  });
+}
+
+/* ---------- markdown views ---------- */
+function mdRender(el, text){
+  el.innerHTML = marked.parse(text);
+  el.querySelectorAll('a').forEach(a=>{
+    const href = a.getAttribute('href')||'';
+    if(href.includes('candidates/')){
+      const m = href.match(/candidates\/(\d+)/);
+      if(m){ a.href='#'; a.addEventListener('click', e=>{e.preventDefault(); openDossier(parseInt(m[1],10));}); return; }
+    }
+    if(href.endsWith('.md')){
+      const key = href.replace('./','');
+      if(D.docs[key]){ a.href='#'; a.addEventListener('click', e=>{e.preventDefault(); openMethod(key);}); return; }
+    }
+    if(href.endsWith('.xlsx')){ a.href='primaries-scoring.xlsx'; return; }
+    if(href.startsWith('http')) a.target='_blank';
+  });
+}
+const METHOD_DOCS = [
+  ['README.md','סקירה ומדריך'],
+  ['01-plan.md','תוכנית הפעולה והשיטות'],
+  ['02-sources.md','אמינות מקורות'],
+  ['03-topics-traits.md','נושאים ותכונות'],
+  ['04-scoring-method.md','שיטת החישוב'],
+];
+function buildMethod(){
+  const nav = document.getElementById('mbuttons'); nav.innerHTML='';
+  METHOD_DOCS.forEach(([key,label])=>{
+    const b=document.createElement('button'); b.textContent=label; b.dataset.key=key;
+    b.addEventListener('click',()=>openMethod(key)); nav.append(b);
+  });
+}
+function openMethod(key){
+  showTab('method');
+  document.querySelectorAll('#mbuttons button').forEach(b=>b.classList.toggle('active', b.dataset.key===key));
+  mdRender(document.getElementById('method-view'), D.docs[key]);
+}
+function buildDossierList(filter=''){
+  const box = document.getElementById('dbuttons'); box.innerHTML='';
+  D.candidates.filter(c=>c.name.includes(filter)).forEach(c=>{
+    const b=document.createElement('button'); b.textContent=`${String(c.id).padStart(2,'0')} · ${c.name}`; b.dataset.id=c.id;
+    b.addEventListener('click',()=>openDossier(c.id)); box.append(b);
+  });
+}
+function openDossier(id){
+  showTab('dossiers');
+  document.querySelectorAll('#dbuttons button').forEach(b=>b.classList.toggle('active', b.dataset.id==id));
+  mdRender(document.getElementById('dossier-view'), D.dossiers[id] || 'לא נמצא תיק.');
+}
+document.getElementById('dsearch').addEventListener('input', e=>buildDossierList(e.target.value.trim()));
+
+/* ---------- tabs ---------- */
+function showTab(name){
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('active', s.id==='tab-'+name));
+}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+
+buildSliders(); buildMethod(); buildDossierList(); openMethod('README.md'); showTab('rank'); render();
+</script>
+</body>
+</html>
