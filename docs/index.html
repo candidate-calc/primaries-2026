@@ -25,13 +25,39 @@
 
   /* ranking layout */
   .layout{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}
-  @media(max-width:900px){.layout{grid-template-columns:1fr}}
+  @media(max-width:900px){
+    .layout{grid-template-columns:140px minmax(0,1fr);gap:6px}
+    .rowscore{font-size:.66rem}
+    table.rank td.namecell{padding-left:28px}
+    main{padding:8px}
+    .card{padding:9px;border-radius:10px}
+    .card h3{font-size:.82rem;margin-bottom:6px}
+    header{padding:10px 12px} header h1{font-size:1rem} header .sub{font-size:.72rem}
+    nav.tabs{padding:0 8px} nav.tabs button{padding:7px 10px;font-size:.8rem}
+    table.rank{font-size:.78rem;table-layout:fixed}
+    table.rank th{padding:5px 2px;font-size:.66rem}
+    table.rank td{padding:4px 2px}
+    table.rank th:first-child{width:17px}
+    table.rank th:last-child{width:30px}
+    .namecell{overflow:hidden}
+    .namecell .namebtn{font-size:.72rem}
+    .ev{min-width:22px;font-size:.62rem;padding:1px 3px}
+    .wide{display:none}
+    .card .wslider{height:26px;margin:4px 0}
+    .wslider .wlabel,.wslider .wval{line-height:26px;font-size:.7rem}
+    .btnrow button.act{padding:5px 9px;font-size:.75rem}
+    .note{font-size:.68rem}
+    .dphoto{width:104px;height:104px}
+  }
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
   .card h3{margin:0 0 10px;font-size:1rem;color:var(--accent)}
-  .slider-row{display:grid;grid-template-columns:1fr 90px 34px;align-items:center;gap:8px;margin:7px 0}
-  .slider-row label{font-size:.85rem}
-  .slider-row input[type=range]{width:100%;accent-color:var(--accent2)}
-  .slider-row .val{font-size:.85rem;font-weight:600;text-align:center;background:var(--bg);border-radius:6px;padding:2px 0}
+  /* סליידר קומפקטי: התווית יושבת על פס המילוי, וכל השורה היא הסליידר */
+  .wslider{position:relative;height:30px;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:6px 0;background:var(--bg)}
+  .wfill{position:absolute;top:0;bottom:0;right:0;background:rgba(76,154,143,.33);pointer-events:none}
+  .wlabel{position:absolute;right:10px;top:0;line-height:30px;font-size:.8rem;z-index:1;pointer-events:none;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 42px)}
+  .wval{position:absolute;left:8px;top:0;line-height:30px;font-size:.8rem;font-weight:700;z-index:1;pointer-events:none}
+  .wslider input[type=range]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;margin:0}
   details{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
   details summary{cursor:pointer;font-size:.9rem;color:var(--accent);font-weight:600}
   .btnrow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
@@ -42,11 +68,14 @@
   table.rank{width:100%;border-collapse:collapse;font-size:.92rem}
   table.rank th{position:sticky;top:0;background:var(--accent);color:#fff;padding:8px 6px;font-size:.82rem}
   table.rank td{padding:7px 6px;border-bottom:1px solid var(--line)}
-  tr.top8 td{background:var(--top)}
+  tr.top8 td{background-color:var(--top)}
+  tr.mainrow{cursor:pointer}
+  tr.mainrow:hover td{filter:brightness(.97)}
   .namebtn{background:none;border:0;color:var(--accent);cursor:pointer;font-family:inherit;
-    font-size:.92rem;text-decoration:underline;padding:0}
-  .scorebar{background:var(--bg);border-radius:5px;height:14px;min-width:110px;overflow:hidden}
-  .scorebar>div{height:100%;background:var(--bar)}
+    font-size:inherit;text-decoration:underline;padding:0}
+  /* פס הציון = רקע של תא השם; הציון צף בקצה התא */
+  table.rank td.namecell{background-repeat:no-repeat;position:relative;padding-left:34px}
+  .rowscore{position:absolute;left:5px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--accent);font-size:.78em}
   .ev{display:inline-block;min-width:34px;text-align:center;border-radius:10px;font-size:.78rem;padding:1px 6px;color:#fff}
   .detail-row td{background:#fbfcfd;font-size:.8rem}
   .chips{display:flex;flex-wrap:wrap;gap:5px;padding:4px 0}
@@ -127,10 +156,10 @@
     <div class="card">
       <h3>הדירוג לפי ההעדפות שלך <span id="warn" style="color:var(--bad);font-size:.8rem"></span></h3>
       <table class="rank">
-        <thead><tr><th>#</th><th>מועמד/ת</th><th style="width:130px">ציון</th><th>0–100</th><th>נושאים</th><th>תכונות</th><th>ביסוס</th><th></th></tr></thead>
+        <thead><tr><th>#</th><th>מועמד/ת · ציון</th><th class="wide">נושאים</th><th class="wide">תכונות</th><th>ביסוס</th></tr></thead>
         <tbody id="rankbody"></tbody>
       </table>
-      <div class="note">ירוק = שמונת הראשונים (בפריימריז מצביעים ל־6–8). הדירוגים הם שיפוט מנומק על סמך המקורות שנאספו — פירוט מלא בתיקי המועמדים. עמודת "ביסוס" = כמה המידע נשען על מקורות חיצוניים (5) לעומת עדות עצמית בלבד (1).</div>
+      <div class="note">לחיצה על שורה פותחת את פירוט הציונים; לחיצה על שם פותחת את התיק. ירוק = שמונת הראשונים (בפריימריז מצביעים ל־6–8). "ביסוס" = כמה המידע נשען על מקורות חיצוניים (5) לעומת עדות עצמית בלבד (1).</div>
     </div>
   </div>
 </section>
@@ -168,17 +197,28 @@ function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 
 /* ---------- sliders ---------- */
 function sliderRow(label, value, min, max, step, onchange){
-  const row = document.createElement('div'); row.className='slider-row';
-  const lab = document.createElement('label'); lab.textContent = label;
+  const row = document.createElement('div'); row.className='wslider';
+  const fill = document.createElement('div'); fill.className='wfill';
+  const lab = document.createElement('span'); lab.className='wlabel'; lab.textContent = label;
+  const val = document.createElement('span'); val.className='wval';
   const inp = document.createElement('input');
   inp.type='range'; inp.min=min; inp.max=max; inp.step=step; inp.value=value;
-  const val = document.createElement('div'); val.className='val'; val.textContent = value;
-  inp.addEventListener('input', ()=>{ val.textContent = inp.value; onchange(parseFloat(inp.value)); save(); render(); });
-  row.append(lab, inp, val);
-  row._set = v => { inp.value=v; val.textContent=v; };
+  const paint = v => { fill.style.width = ((v-min)/(max-min)*100) + '%'; val.textContent = v; };
+  paint(value);
+  inp.addEventListener('input', ()=>{ const v=parseFloat(inp.value); paint(v); onchange(v); save(); render(); });
+  row.append(fill, lab, val, inp);
+  row._set = v => { inp.value=v; paint(parseFloat(v)); };
   return row;
 }
 const slRefs = {wT:[], wC:[], alpha:[], gamma:[], lam:null, beta:null};
+/* שמות קצרים לסליידרים במסך צר */
+const SHORT_TOPICS = {'ביטחון וחטופים':'ביטחון','דמוקרטיה ומשפט':'דמוקרטיה','דת ומדינה ושוויון בנטל':'דת ומדינה',
+  'הסדרה ושלום':'שלום','שוויון אזרחי ושותפות':'שוויון אזרחי','כלכלה עבודה ורווחה':'כלכלה',
+  'חינוך ובריאות':'חינוך','סביבה ואקלים':'סביבה','שקיפות וטוהר מידות':'שקיפות','מגדר ולהט"ב':'מגדר ולהט"ב'};
+const SHORT_TRAITS = {'יושרה':'יושרה','חריצות וביצוע':'חריצות','אומץ ציבורי':'אומץ',
+  'חיבור ועבודה רוחבית':'חיבור רוחבי','מקצועיות וניסיון':'מקצועיות'};
+const narrowMQ = window.matchMedia('(max-width:900px)');
+function shortName(full, map){ return narrowMQ.matches ? (map[full] || full) : full; }
 /* סדר תצוגת הסליידרים: משקל ברירת מחדל יורד, ובשוויון — לפי הא"ב */
 function displayOrder(names, defWeights){
   return names.map((_,i)=>i).sort((a,b)=>
@@ -187,17 +227,19 @@ function displayOrder(names, defWeights){
 function buildSliders(){
   const t = document.getElementById('sl-topics'); t.innerHTML='';
   displayOrder(D.topics, D.defaults.wT).forEach(i=>{
-    const r=sliderRow(D.topics[i], state.wT[i],0,10,0.5, v=>state.wT[i]=v); slRefs.wT[i]=r; t.append(r); });
+    const r=sliderRow(shortName(D.topics[i], SHORT_TOPICS), state.wT[i],0,10,0.5, v=>state.wT[i]=v);
+    r.title = D.topics[i]; slRefs.wT[i]=r; t.append(r); });
   const c = document.getElementById('sl-traits'); c.innerHTML='';
   displayOrder(D.traits, D.defaults.wC).forEach(i=>{
-    const r=sliderRow(D.traits[i], state.wC[i],0,10,0.5, v=>state.wC[i]=v); slRefs.wC[i]=r; c.append(r); });
+    const r=sliderRow(shortName(D.traits[i], SHORT_TRAITS), state.wC[i],0,10,0.5, v=>state.wC[i]=v);
+    r.title = D.traits[i]; slRefs.wC[i]=r; c.append(r); });
   const td = document.getElementById('sl-tdims'); td.innerHTML='';
   D.tdims.forEach((name,i)=>{ const r=sliderRow(name, state.alpha[i],0,10,0.5, v=>state.alpha[i]=v); slRefs.alpha[i]=r; td.append(r); });
   const cd = document.getElementById('sl-cdims'); cd.innerHTML='';
-  D.cdims.forEach((name,i)=>{ const r=sliderRow(name, state.gamma[i],0,10,0.5, v=>state.gamma[i]=v); slRefs.gamma[i]=r; cd.append(r); });
+  D.cdims.forEach((name,i)=>{ const r=sliderRow(shortName(name, {'קרדיט עמיתים':'קרדיט'}), state.gamma[i],0,10,0.5, v=>state.gamma[i]=v); r.title=name; slRefs.gamma[i]=r; cd.append(r); });
   const g = document.getElementById('sl-global'); g.innerHTML='';
-  slRefs.lam = sliderRow('λ — נושאים מול תכונות', state.lam,0,1,0.05, v=>state.lam=v);
-  slRefs.beta = sliderRow('β — קנס על ביסוס נמוך', state.beta,0,0.5,0.05, v=>state.beta=v);
+  slRefs.lam = sliderRow(narrowMQ.matches ? 'λ איזון' : 'λ — נושאים מול תכונות', state.lam,0,1,0.05, v=>state.lam=v);
+  slRefs.beta = sliderRow(narrowMQ.matches ? 'β ביסוס' : 'β — קנס על ביסוס נמוך', state.beta,0,0.5,0.05, v=>state.beta=v);
   g.append(slRefs.lam, slRefs.beta);
 }
 document.getElementById('btn-reset').addEventListener('click', ()=>{
@@ -235,14 +277,13 @@ function render(){
   const tb = document.getElementById('rankbody'); tb.innerHTML='';
   const max = rows[0] ? Math.max(rows[0].score, 1) : 1;
   rows.forEach((r,idx)=>{
-    const tr = document.createElement('tr'); if(idx<8) tr.className='top8';
+    const tr = document.createElement('tr'); tr.className = 'mainrow' + (idx<8 ? ' top8' : '');
+    const pct = (r.score/max*100).toFixed(1);
     tr.innerHTML = `<td>${idx+1}</td>
-      <td><button class="namebtn" data-id="${r.c.id}">${r.c.name}</button></td>
-      <td><div class="scorebar"><div style="width:${(r.score/max*100).toFixed(1)}%"></div></div></td>
-      <td><b>${r.score.toFixed(1)}</b></td>
-      <td>${r.TOP.toFixed(2)}</td><td>${r.CHR.toFixed(2)}</td>
-      <td><span class="ev" style="background:${evColor(r.c.ev)}">${r.c.ev}</span></td>
-      <td><button class="act" style="padding:2px 8px" data-exp="${r.c.id}">פירוט</button></td>`;
+      <td class="namecell" style="background-image:linear-gradient(to left, rgba(76,154,143,.32) ${pct}%, transparent ${pct}%)">
+        <span class="rowscore">${r.score.toFixed(1)}</span><button class="namebtn" data-id="${r.c.id}">${r.c.name}</button></td>
+      <td class="wide">${r.TOP.toFixed(2)}</td><td class="wide">${r.CHR.toFixed(2)}</td>
+      <td><span class="ev" style="background:${evColor(r.c.ev)}">${r.c.ev}</span></td>`;
     tb.append(tr);
     const dr = document.createElement('tr'); dr.className='detail-row'; dr.style.display='none';
     const chip = (label, s) => {
@@ -251,15 +292,15 @@ function render(){
     };
     const topicChips = D.topics.map((t,i)=>chip(t, r.St[i])).join('');
     const traitChips = D.traits.map((t,i)=>chip(t, r.Qc[i])).join('');
-    dr.innerHTML = `<td></td><td colspan="7">
+    dr.innerHTML = `<td></td><td colspan="4">
       <div class="chips"><span class="chips-label">נושאים:</span>${topicChips}</div>
       <hr class="chips-divider">
       <div class="chips"><span class="chips-label">תכונות:</span>${traitChips}</div></td>`;
     tb.append(dr);
-    tr.querySelector('[data-exp]').addEventListener('click', ()=>{
+    tr.addEventListener('click', ()=>{
       dr.style.display = dr.style.display==='none' ? '' : 'none';
     });
-    tr.querySelector('.namebtn').addEventListener('click', ()=>openDossier(r.c.id));
+    tr.querySelector('.namebtn').addEventListener('click', e=>{ e.stopPropagation(); openDossier(r.c.id); });
   });
 }
 
@@ -352,6 +393,7 @@ function showTab(name){
 }
 document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
 
+narrowMQ.addEventListener('change', buildSliders); /* החלפת שמות מלאים/קצרים במעבר רוחב */
 buildSliders(); buildMethod(); buildDossierList(); openMethod('README.md'); showTab('rank'); render();
 </script>
 </body>
