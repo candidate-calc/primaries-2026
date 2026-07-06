@@ -12,6 +12,7 @@
     --accent:#1f4e5f; --accent2:#2e7d6b; --top:#e2efda; --bar:#4c9a8f; --bad:#c0392b;
   }
   *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
   header{background:var(--accent);color:#fff;padding:14px 22px}
   header h1{margin:0;font-size:1.25rem}
@@ -37,8 +38,9 @@
     table.rank{font-size:.78rem;table-layout:fixed}
     table.rank th{padding:5px 2px;font-size:.66rem}
     table.rank td{padding:4px 2px}
-    table.rank th:first-child{width:17px}
-    table.rank th:last-child{width:30px}
+    table.rank th:first-child{width:16px}
+    table.rank th:last-child{width:36px}
+    table.rank th{overflow:hidden}
     .namecell{overflow:hidden}
     .namecell .namebtn{font-size:.72rem}
     .ev{min-width:22px;font-size:.62rem;padding:1px 3px}
@@ -95,6 +97,13 @@
   @media(hover:none){#hovercard{display:none!important}}
 
   .dphoto{float:left;width:150px;height:150px;object-fit:cover;border-radius:12px;margin:0 14px 10px 0}
+  .dossier-chips{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:10px 0;font-size:.82rem}
+  #dossier-toolbar{display:none}
+  @media(max-width:900px){
+    #dossier-toolbar{display:flex;gap:8px;margin-bottom:10px}
+    #dossier-layout:not(.viewing) #dossier-content{display:none}
+    #dossier-layout.viewing .doclist{display:none}
+  }
   .note{font-size:.8rem;color:var(--muted);margin-top:8px}
 
   /* docs / dossiers */
@@ -165,12 +174,18 @@
 </section>
 
 <section id="tab-dossiers" class="tab">
-  <div class="doclayout">
+  <div class="doclayout" id="dossier-layout">
     <div class="card doclist">
       <input id="dsearch" type="search" placeholder="חיפוש מועמד/ת…">
       <div id="dbuttons" style="max-height:70vh;overflow-y:auto"></div>
     </div>
-    <div class="card mdbody" id="dossier-view">בחרו מועמד/ת מהרשימה.</div>
+    <div class="card" id="dossier-content">
+      <div id="dossier-toolbar">
+        <button class="act" id="btn-back-rank">‹ חזרה לדירוג</button>
+        <button class="act" id="btn-all-cands">כל המועמדים</button>
+      </div>
+      <div class="mdbody" id="dossier-view">בחרו מועמד/ת מהרשימה.</div>
+    </div>
   </div>
 </section>
 
@@ -256,18 +271,32 @@ function wavg(vals, weights){
   for(let i=0;i<vals.length;i++){ s+=vals[i]*weights[i]; w+=weights[i]; }
   return w>0 ? s/w : 0;
 }
+function calcOne(c, sumWT, sumWC){
+  const St = c.T.map(dims=>wavg(dims, state.alpha));
+  const TOP = sumWT>0 ? St.reduce((a,s,i)=>a+s*state.wT[i],0)/sumWT : 0;
+  const Qc = c.C.map(dims=>wavg(dims, state.gamma));
+  const CHR = sumWC>0 ? Qc.reduce((a,s,i)=>a+s*state.wC[i],0)/sumWC : 0;
+  const F = (state.lam*TOP + (1-state.lam)*CHR) * (1 - state.beta*(5-c.ev)/4);
+  return {c, St, Qc, TOP, CHR, F, score: Math.max(0,(F-1)/4*100)};
+}
 function scoreAll(){
   const sumWT = state.wT.reduce((a,b)=>a+b,0), sumWC = state.wC.reduce((a,b)=>a+b,0);
   document.getElementById('warn').textContent =
     (sumWT===0||sumWC===0) ? ' (אזהרה: כל המשקלים בקבוצה כלשהי הם 0)' : '';
-  return D.candidates.map(c=>{
-    const St = c.T.map(dims=>wavg(dims, state.alpha));
-    const TOP = sumWT>0 ? St.reduce((a,s,i)=>a+s*state.wT[i],0)/sumWT : 0;
-    const Qc = c.C.map(dims=>wavg(dims, state.gamma));
-    const CHR = sumWC>0 ? Qc.reduce((a,s,i)=>a+s*state.wC[i],0)/sumWC : 0;
-    const F = (state.lam*TOP + (1-state.lam)*CHR) * (1 - state.beta*(5-c.ev)/4);
-    return {c, St, Qc, TOP, CHR, F, score: Math.max(0,(F-1)/4*100)};
-  }).sort((a,b)=>b.F-a.F);
+  return D.candidates.map(c=>calcOne(c, sumWT, sumWC)).sort((a,b)=>b.F-a.F);
+}
+function chip(label, s){
+  const pct = ((s-1)/4*100).toFixed(0);
+  return `<span class="chip" style="background:linear-gradient(to left, rgba(76,154,143,.38) ${pct}%, var(--bg) ${pct}%)">${label}: <b>${s.toFixed(1)}</b></span>`;
+}
+function chipsBlock(c){
+  const s = calcOne(c, state.wT.reduce((a,b)=>a+b,0), state.wC.reduce((a,b)=>a+b,0));
+  return `<div class="dossier-chips">
+    <div class="note" style="margin:0 0 6px">לפי המשקלים הנוכחיים שלך: ציון <b>${s.score.toFixed(1)}</b> · נושאים ${s.TOP.toFixed(2)} · תכונות ${s.CHR.toFixed(2)}</div>
+    <div class="chips"><span class="chips-label">נושאים:</span>${D.topics.map((t,i)=>chip(t,s.St[i])).join('')}</div>
+    <hr class="chips-divider">
+    <div class="chips"><span class="chips-label">תכונות:</span>${D.traits.map((t,i)=>chip(t,s.Qc[i])).join('')}</div>
+  </div>`;
 }
 
 /* ---------- render ranking ---------- */
@@ -286,18 +315,13 @@ function render(){
       <td><span class="ev" style="background:${evColor(r.c.ev)}">${r.c.ev}</span></td>`;
     tb.append(tr);
     const dr = document.createElement('tr'); dr.className='detail-row'; dr.style.display='none';
-    const chip = (label, s) => {
-      const pct = ((s-1)/4*100).toFixed(0);
-      return `<span class="chip" style="background:linear-gradient(to left, rgba(76,154,143,.38) ${pct}%, var(--bg) ${pct}%)">${label}: <b>${s.toFixed(1)}</b></span>`;
-    };
-    const topicChips = D.topics.map((t,i)=>chip(t, r.St[i])).join('');
-    const traitChips = D.traits.map((t,i)=>chip(t, r.Qc[i])).join('');
     dr.innerHTML = `<td></td><td colspan="4">
-      <div class="chips"><span class="chips-label">נושאים:</span>${topicChips}</div>
+      <div class="chips"><span class="chips-label">נושאים:</span>${D.topics.map((t,i)=>chip(t, r.St[i])).join('')}</div>
       <hr class="chips-divider">
-      <div class="chips"><span class="chips-label">תכונות:</span>${traitChips}</div></td>`;
+      <div class="chips"><span class="chips-label">תכונות:</span>${D.traits.map((t,i)=>chip(t, r.Qc[i])).join('')}</div></td>`;
     tb.append(dr);
     tr.addEventListener('click', ()=>{
+      if (narrowMQ.matches) { openDossier(r.c.id); return; } /* במובייל — ישר לעמוד המועמד */
       dr.style.display = dr.style.display==='none' ? '' : 'none';
     });
     tr.querySelector('.namebtn').addEventListener('click', e=>{ e.stopPropagation(); openDossier(r.c.id); });
@@ -335,11 +359,13 @@ function buildMethod(){
     b.addEventListener('click',()=>openMethod(key)); nav.append(b);
   });
 }
-function openMethod(key){
+function renderMethod(key){
+  if(!D.docs[key]) key = 'README.md';
   showTab('method');
   document.querySelectorAll('#mbuttons button').forEach(b=>b.classList.toggle('active', b.dataset.key===key));
   mdRender(document.getElementById('method-view'), D.docs[key]);
 }
+function openMethod(key){ navigate('method/'+key); }
 function buildDossierList(filter=''){
   const box = document.getElementById('dbuttons'); box.innerHTML='';
   D.candidates.filter(c=>c.name.includes(filter)).forEach(c=>{
@@ -348,14 +374,35 @@ function buildDossierList(filter=''){
   });
 }
 function candById(id){ return D.candidates.find(c=>c.id===id); }
-function openDossier(id){
+function renderDossier(id){
   showTab('dossiers');
+  document.getElementById('dossier-layout').classList.add('viewing');
   document.querySelectorAll('#dbuttons button').forEach(b=>b.classList.toggle('active', b.dataset.id==id));
   const view = document.getElementById('dossier-view');
   mdRender(view, D.dossiers[id] || 'לא נמצא תיק.');
   const c = candById(id);
-  if (c && c.photo) view.insertAdjacentHTML('afterbegin', `<img class="dphoto" src="${c.photo}" alt="${c.name}">`);
+  if (c) {
+    const h1 = view.querySelector('h1');
+    if (h1) h1.insertAdjacentHTML('afterend', chipsBlock(c));
+    if (c.photo) view.insertAdjacentHTML('afterbegin', `<img class="dphoto" src="${c.photo}" alt="${c.name}">`);
+  }
+  window.scrollTo({top:0, behavior:'instant'});
 }
+function openDossier(id){ navigate('c/'+id); }
+
+/* ---------- ניתוב hash: כפתור Back של הדפדפן מחזיר במקום לצאת מהאתר ---------- */
+function currentRoute(){ return location.hash.replace(/^#/,'') || 'rank'; }
+function navigate(r){ if (currentRoute() === r) route(); else location.hash = r; }
+function route(){
+  const h = currentRoute();
+  if (h.startsWith('c/')) { renderDossier(parseInt(h.slice(2),10)); }
+  else if (h.startsWith('method/')) { renderMethod(decodeURIComponent(h.slice(7))); }
+  else if (h === 'dossiers') { showTab('dossiers'); document.getElementById('dossier-layout').classList.remove('viewing'); }
+  else { showTab('rank'); }
+}
+window.addEventListener('hashchange', route);
+document.getElementById('btn-back-rank').addEventListener('click', ()=>navigate('rank'));
+document.getElementById('btn-all-cands').addEventListener('click', ()=>navigate('dossiers'));
 
 /* ---------- hover card ---------- */
 const hcard = document.getElementById('hovercard');
@@ -391,10 +438,18 @@ function showTab(name){
   document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
   document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('active', s.id==='tab-'+name));
 }
-document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  const cur = currentRoute();
+  if (b.dataset.tab==='rank') navigate('rank');
+  else if (b.dataset.tab==='dossiers') navigate('dossiers');
+  else navigate(cur.startsWith('method/') ? cur : 'method/README.md');
+}));
 
 narrowMQ.addEventListener('change', buildSliders); /* החלפת שמות מלאים/קצרים במעבר רוחב */
-buildSliders(); buildMethod(); buildDossierList(); openMethod('README.md'); showTab('rank'); render();
+buildSliders(); buildMethod(); buildDossierList(); render();
+renderMethod('README.md'); /* טעינה מוקדמת של תוכן הלשונית */
+if (!location.hash) history.replaceState(null, '', '#rank');
+route();
 </script>
 </body>
 </html>
