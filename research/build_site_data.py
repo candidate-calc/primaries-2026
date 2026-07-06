@@ -43,7 +43,9 @@ for r in trows:
     T = [vals[t*5:(t+1)*5] for t in range(10)]
     cv = [float(x) for x in cmap[i][2:]]
     C = [cv[c*4:(c+1)*4] for c in range(5)]
-    cands.append({'id': i, 'name': name, 'ev': ev, 'T': T, 'C': C, 'file': dossier_files.get(i,'')})
+    photo = f'photos/{i:02d}.jpg'
+    if not os.path.exists(os.path.join(DOCS, 'photos', f'{i:02d}.jpg')): photo = ''
+    cands.append({'id': i, 'name': name, 'ev': ev, 'T': T, 'C': C, 'file': dossier_files.get(i,''), 'photo': photo})
 
 docs = {}
 for fn in ['README.md','01-plan.md','02-sources.md','03-topics-traits.md','04-scoring-method.md']:

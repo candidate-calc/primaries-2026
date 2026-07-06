@@ -50,7 +50,22 @@
   .ev{display:inline-block;min-width:34px;text-align:center;border-radius:10px;font-size:.78rem;padding:1px 6px;color:#fff}
   .detail-row td{background:#fbfcfd;font-size:.8rem}
   .chips{display:flex;flex-wrap:wrap;gap:5px;padding:4px 0}
-  .chip{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:2px 9px}
+  .chip{border:1px solid var(--line);border-radius:12px;padding:2px 9px;background:var(--bg)}
+  .chips-divider{border:0;border-top:1px solid var(--line);margin:7px 0}
+  .chips-label{font-weight:600;color:var(--muted);margin-left:4px;align-self:center}
+
+  /* hover card */
+  #hovercard{position:absolute;z-index:60;width:440px;max-width:92vw;max-height:380px;overflow-y:auto;
+    background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.2);
+    padding:14px;display:none;line-height:1.55;font-size:.85rem}
+  #hovercard img{float:left;width:88px;height:88px;object-fit:cover;border-radius:10px;margin:0 12px 8px 0}
+  #hovercard h1{font-size:1.05rem;color:var(--accent);margin:0 0 6px}
+  #hovercard h2{font-size:.9rem;color:var(--accent);margin:10px 0 4px}
+  #hovercard table{border-collapse:collapse;font-size:.78rem}
+  #hovercard th,#hovercard td{border:1px solid var(--line);padding:3px 7px}
+  @media(hover:none){#hovercard{display:none!important}}
+
+  .dphoto{float:left;width:150px;height:150px;object-fit:cover;border-radius:12px;margin:0 14px 10px 0}
   .note{font-size:.8rem;color:var(--muted);margin-top:8px}
 
   /* docs / dossiers */
@@ -138,6 +153,7 @@
 </section>
 
 </main>
+<div id="hovercard" dir="rtl"></div>
 <footer>
   הדירוגים המספריים הם שיפוט מנומק על בסיס מקורות מתויגי־אמינות (נכון ל־6.7.2026), לא מדידה אובייקטיבית.
   הפרויקט המלא — כולל תוכנית הפעולה, מסגרת אמינות המקורות וכל תיקי המועמדים — זמין בריפו.
@@ -222,9 +238,16 @@ function render(){
       <td><button class="act" style="padding:2px 8px" data-exp="${r.c.id}">פירוט</button></td>`;
     tb.append(tr);
     const dr = document.createElement('tr'); dr.className='detail-row'; dr.style.display='none';
-    const chips = D.topics.map((t,i)=>`<span class="chip">${t}: <b>${r.St[i].toFixed(1)}</b></span>`).join('') +
-      '<br>' + D.traits.map((t,i)=>`<span class="chip">${t}: <b>${r.Qc[i].toFixed(1)}</b></span>`).join('');
-    dr.innerHTML = `<td></td><td colspan="7"><div class="chips">${chips}</div></td>`;
+    const chip = (label, s) => {
+      const pct = ((s-1)/4*100).toFixed(0);
+      return `<span class="chip" style="background:linear-gradient(to left, rgba(76,154,143,.38) ${pct}%, var(--bg) ${pct}%)">${label}: <b>${s.toFixed(1)}</b></span>`;
+    };
+    const topicChips = D.topics.map((t,i)=>chip(t, r.St[i])).join('');
+    const traitChips = D.traits.map((t,i)=>chip(t, r.Qc[i])).join('');
+    dr.innerHTML = `<td></td><td colspan="7">
+      <div class="chips"><span class="chips-label">נושאים:</span>${topicChips}</div>
+      <hr class="chips-divider">
+      <div class="chips"><span class="chips-label">תכונות:</span>${traitChips}</div></td>`;
     tb.append(dr);
     tr.querySelector('[data-exp]').addEventListener('click', ()=>{
       dr.style.display = dr.style.display==='none' ? '' : 'none';
@@ -276,11 +299,43 @@ function buildDossierList(filter=''){
     b.addEventListener('click',()=>openDossier(c.id)); box.append(b);
   });
 }
+function candById(id){ return D.candidates.find(c=>c.id===id); }
 function openDossier(id){
   showTab('dossiers');
   document.querySelectorAll('#dbuttons button').forEach(b=>b.classList.toggle('active', b.dataset.id==id));
-  mdRender(document.getElementById('dossier-view'), D.dossiers[id] || 'לא נמצא תיק.');
+  const view = document.getElementById('dossier-view');
+  mdRender(view, D.dossiers[id] || 'לא נמצא תיק.');
+  const c = candById(id);
+  if (c && c.photo) view.insertAdjacentHTML('afterbegin', `<img class="dphoto" src="${c.photo}" alt="${c.name}">`);
 }
+
+/* ---------- hover card ---------- */
+const hcard = document.getElementById('hovercard');
+let hcShowTimer=null, hcHideTimer=null;
+function showHoverCard(btn){
+  const id = parseInt(btn.dataset.id,10), c = candById(id);
+  if(!c || !D.dossiers[id]) return;
+  hcard.innerHTML = (c.photo ? `<img src="${c.photo}" alt="${c.name}">` : '') + marked.parse(D.dossiers[id]);
+  const rect = btn.getBoundingClientRect();
+  const left = Math.max(8, Math.min(rect.left + window.scrollX, window.innerWidth - 460 + window.scrollX));
+  hcard.style.left = left + 'px';
+  hcard.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+  hcard.style.display = 'block';
+}
+function hideHoverCard(){ hcard.style.display='none'; }
+document.getElementById('rankbody').addEventListener('mouseover', e=>{
+  const btn = e.target.closest('.namebtn'); if(!btn) return;
+  clearTimeout(hcHideTimer);
+  hcShowTimer = setTimeout(()=>showHoverCard(btn), 220);
+});
+document.getElementById('rankbody').addEventListener('mouseout', e=>{
+  const btn = e.target.closest('.namebtn'); if(!btn) return;
+  clearTimeout(hcShowTimer);
+  hcHideTimer = setTimeout(hideHoverCard, 300);
+});
+hcard.addEventListener('mouseenter', ()=>clearTimeout(hcHideTimer));
+hcard.addEventListener('mouseleave', ()=>{ hcHideTimer = setTimeout(hideHoverCard, 200); });
+document.addEventListener('click', e=>{ if(!hcard.contains(e.target)) hideHoverCard(); });
 document.getElementById('dsearch').addEventListener('input', e=>buildDossierList(e.target.value.trim()));
 
 /* ---------- tabs ---------- */
