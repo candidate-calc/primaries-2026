@@ -179,11 +179,18 @@ function sliderRow(label, value, min, max, step, onchange){
   return row;
 }
 const slRefs = {wT:[], wC:[], alpha:[], gamma:[], lam:null, beta:null};
+/* סדר תצוגת הסליידרים: משקל ברירת מחדל יורד, ובשוויון — לפי הא"ב */
+function displayOrder(names, defWeights){
+  return names.map((_,i)=>i).sort((a,b)=>
+    (defWeights[b]-defWeights[a]) || names[a].localeCompare(names[b],'he'));
+}
 function buildSliders(){
   const t = document.getElementById('sl-topics'); t.innerHTML='';
-  D.topics.forEach((name,i)=>{ const r=sliderRow(name, state.wT[i],0,10,0.5, v=>state.wT[i]=v); slRefs.wT[i]=r; t.append(r); });
+  displayOrder(D.topics, D.defaults.wT).forEach(i=>{
+    const r=sliderRow(D.topics[i], state.wT[i],0,10,0.5, v=>state.wT[i]=v); slRefs.wT[i]=r; t.append(r); });
   const c = document.getElementById('sl-traits'); c.innerHTML='';
-  D.traits.forEach((name,i)=>{ const r=sliderRow(name, state.wC[i],0,10,0.5, v=>state.wC[i]=v); slRefs.wC[i]=r; c.append(r); });
+  displayOrder(D.traits, D.defaults.wC).forEach(i=>{
+    const r=sliderRow(D.traits[i], state.wC[i],0,10,0.5, v=>state.wC[i]=v); slRefs.wC[i]=r; c.append(r); });
   const td = document.getElementById('sl-tdims'); td.innerHTML='';
   D.tdims.forEach((name,i)=>{ const r=sliderRow(name, state.alpha[i],0,10,0.5, v=>state.alpha[i]=v); slRefs.alpha[i]=r; td.append(r); });
   const cd = document.getElementById('sl-cdims'); cd.innerHTML='';
