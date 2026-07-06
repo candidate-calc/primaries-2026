@@ -33,6 +33,23 @@ def read_csv(name):
 trows = read_csv('ratings-topics.csv')[1:]
 crows = read_csv('ratings-traits.csv')[1:]
 
+# ערכי ויקיפדיה עברית קיימים (כותרות מאומתות מול ה-API, research/wiki-extracts.txt)
+WIKI = {1:'משה רדמן אבוטבול',2:'ערן עציון',3:'מורן זר קצנשטיין',4:'יעל כהן-פארן',6:'רם שפע',
+ 7:'יריב אופנהיימר',9:'נאור נרקיס',10:'מהרטה ברוך-רון',12:'ירון ניב',14:'אליס גולדמן',
+ 15:'אבי דבוש',18:'ענבר בזק',22:"אמיר ח'ניפס",23:'הדס רגולסקי',25:'חן אריאלי',26:'מיכל רוזין',
+ 28:'אפרת רייטן',33:'יאיא פינק',35:'נאווה רוזוליו',36:'מאלכ בדר',38:'גלעד קריב',41:'אמילי מואטי',
+ 43:'תומר אביטל',44:'סומיה בשיר',46:'גבי לסקי',47:'נעמה לזימי',48:'איהאב שליאן',49:'מוסי רז',
+ 50:'עלי סלאלחה',51:'נמרוד שפר'}
+
+import re as _re
+def personal_site(md):
+    m = _re.search(r'אתר אישי: ([^\s·\n]+)', md)
+    if not m: return ''
+    tok = m.group(1).strip()
+    if '.' not in tok or tok.startswith('אין') or 'ויקיפדיה' in tok or tok.startswith('site123'):
+        return ''
+    return tok if tok.startswith('http') else 'https://' + tok
+
 cands = []
 cmap = {int(r[0]): r for r in crows}
 dossier_files = {int(os.path.basename(p).split('-')[0]): os.path.basename(p)
@@ -45,7 +62,13 @@ for r in trows:
     C = [cv[c*4:(c+1)*4] for c in range(5)]
     photo = f'photos/{i:02d}.jpg'
     if not os.path.exists(os.path.join(DOCS, 'photos', f'{i:02d}.jpg')): photo = ''
-    cands.append({'id': i, 'name': name, 'ev': ev, 'T': T, 'C': C, 'file': dossier_files.get(i,''), 'photo': photo})
+    md_path = os.path.join(BASE,'candidates', dossier_files.get(i,''))
+    site = ''
+    if dossier_files.get(i):
+        with open(md_path, encoding='utf-8') as f: site = personal_site(f.read())
+    wiki = 'https://he.wikipedia.org/wiki/' + WIKI[i].replace(' ','_') if i in WIKI else ''
+    cands.append({'id': i, 'name': name, 'ev': ev, 'T': T, 'C': C, 'file': dossier_files.get(i,''),
+                  'photo': photo, 'wiki': wiki, 'site': site})
 
 docs = {}
 for fn in ['README.md','01-plan.md','02-sources.md','03-topics-traits.md','04-scoring-method.md']:

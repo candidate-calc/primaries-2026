@@ -15,7 +15,7 @@
   html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
   header{background:var(--accent);color:#fff;padding:14px 22px}
-  header h1{margin:0;font-size:1.25rem}
+  header h1{margin:0;font-size:1.45rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   header .sub{font-size:.85rem;opacity:.85;margin-top:4px}
   nav.tabs{display:flex;gap:6px;background:var(--accent);padding:0 16px}
   nav.tabs button{border:0;background:rgba(255,255,255,.12);color:#fff;padding:9px 18px;
@@ -26,33 +26,9 @@
 
   /* ranking layout */
   .layout{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}
-  @media(max-width:900px){
-    .layout{grid-template-columns:140px minmax(0,1fr);gap:6px}
-    .rowscore{font-size:.66rem}
-    table.rank td.namecell{padding-left:28px}
-    main{padding:8px}
-    .card{padding:9px;border-radius:10px}
-    .card h3{font-size:.82rem;margin-bottom:6px}
-    header{padding:10px 12px} header h1{font-size:1rem} header .sub{font-size:.72rem}
-    nav.tabs{padding:0 8px} nav.tabs button{padding:7px 10px;font-size:.8rem}
-    table.rank{font-size:.78rem;table-layout:fixed}
-    table.rank th{padding:5px 2px;font-size:.66rem}
-    table.rank td{padding:4px 2px}
-    table.rank th:first-child{width:16px}
-    table.rank th:last-child{width:36px}
-    table.rank th{overflow:hidden}
-    .namecell{overflow:hidden}
-    .namecell .namebtn{font-size:.72rem}
-    .ev{min-width:22px;font-size:.62rem;padding:1px 3px}
-    .wide{display:none}
-    .card .wslider{height:26px;margin:4px 0}
-    .wslider .wlabel,.wslider .wval{line-height:26px;font-size:.7rem}
-    .btnrow button.act{padding:5px 9px;font-size:.75rem}
-    .note{font-size:.68rem}
-    .dphoto{width:104px;height:104px}
-  }
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
   .card h3{margin:0 0 10px;font-size:1rem;color:var(--accent)}
+  .card h3.wtitle{font-size:1.15rem}
   /* סליידר קומפקטי: התווית יושבת על פס המילוי, וכל השורה היא הסליידר */
   .wslider{position:relative;height:30px;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:6px 0;background:var(--bg)}
   .wfill{position:absolute;top:0;bottom:0;right:0;background:rgba(76,154,143,.33);pointer-events:none}
@@ -122,11 +98,42 @@
   .mdbody pre{background:var(--bg);padding:12px;border-radius:8px;overflow-x:auto}
   .mdbody blockquote{border-right:4px solid var(--accent2);margin:8px 0;padding:4px 12px;color:var(--muted)}
   footer{max-width:1200px;margin:10px auto 30px;padding:0 18px;font-size:.78rem;color:var(--muted)}
+
+  /* ===== מובייל — חייב להישאר אחרון ב-stylesheet כדי לגבור על כללי הבסיס ===== */
+  @media(max-width:900px){
+    .layout{grid-template-columns:140px minmax(0,1fr);gap:6px}
+    .rowscore{font-size:.66rem}
+    table.rank td.namecell{padding-left:28px}
+    main{padding:8px}
+    .card{padding:9px;border-radius:10px}
+    .card h3{font-size:.82rem;margin-bottom:6px}
+    .card h3.wtitle{font-size:1.05rem}
+    header{padding:10px 12px} header h1{font-size:1.15rem} header .sub{font-size:.72rem}
+    nav.tabs{padding:0 8px} nav.tabs button{padding:7px 10px;font-size:.8rem}
+    table.rank{font-size:.78rem;table-layout:fixed}
+    table.rank th{padding:5px 2px;font-size:.66rem;overflow:hidden}
+    table.rank td{padding:4px 2px}
+    table.rank th:first-child{width:16px}
+    table.rank th:last-child{width:41px}
+    .namecell{overflow:hidden}
+    .namecell .namebtn{font-size:.72rem}
+    .ev{min-width:22px;font-size:.62rem;padding:1px 3px}
+    .wide{display:none}
+    .card .wslider{height:26px;margin:4px 0}
+    .wslider .wlabel,.wslider .wval{line-height:26px;font-size:.7rem}
+    .btnrow button.act{padding:5px 9px;font-size:.75rem}
+    .note{font-size:.68rem}
+    .dphoto{width:104px;height:104px}
+    #dossier-toolbar{display:flex;gap:8px;margin-bottom:10px}
+    #dossier-layout:not(.viewing) #dossier-content{display:none}
+    #dossier-layout.viewing .doclist{display:none}
+    .doclayout{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
 <header>
-  <h1>פריימריז הדמוקרטים 2026 — מחשבון דירוג מועמדים</h1>
+  <h1>הדמוקרטים 2026 — דירוג המועמדים</h1>
   <div class="sub">ההצבעה: 20.7.2026 · בוחרים 6–8 מתוך 51 מועמדים · הנתונים נאספו ב־6.7.2026 ·
     <a href="primaries-scoring.xlsx" style="color:#cde">הורדת גיליון האקסל</a></div>
 </header>
@@ -141,11 +148,11 @@
   <div class="layout">
     <div>
       <div class="card">
-        <h3>משקלי הנושאים (0–10)</h3>
+        <h3 class="wtitle">נושאים</h3>
         <div id="sl-topics"></div>
       </div>
       <div class="card" style="margin-top:14px">
-        <h3>משקלי התכונות (0–10)</h3>
+        <h3 class="wtitle">תכונות</h3>
         <div id="sl-traits"></div>
         <details>
           <summary>הגדרות מתקדמות</summary>
@@ -289,11 +296,22 @@ function chip(label, s){
   const pct = ((s-1)/4*100).toFixed(0);
   return `<span class="chip" style="background:linear-gradient(to left, rgba(76,154,143,.38) ${pct}%, var(--bg) ${pct}%)">${label}: <b>${s.toFixed(1)}</b></span>`;
 }
+function topicChipsFiltered(St){ /* מציגים רק נושאים עם ציון 2 ומעלה */
+  const shown = D.topics.map((t,i)=>({t,s:St[i]})).filter(x=>x.s>=2);
+  return shown.length ? shown.map(x=>chip(x.t,x.s)).join('') : '<span class="note">אין נושאים עם ציון 2 ומעלה</span>';
+}
+function linksLine(c){
+  const links = [];
+  if (c.wiki) links.push(`<a href="${c.wiki}" target="_blank">ויקיפדיה</a>`);
+  if (c.site) links.push(`<a href="${c.site}" target="_blank">אתר אישי</a>`);
+  return links.length ? `<div class="note" style="margin:0 0 6px">🔗 ${links.join(' · ')}</div>` : '';
+}
 function chipsBlock(c){
   const s = calcOne(c, state.wT.reduce((a,b)=>a+b,0), state.wC.reduce((a,b)=>a+b,0));
   return `<div class="dossier-chips">
+    ${linksLine(c)}
     <div class="note" style="margin:0 0 6px">לפי המשקלים הנוכחיים שלך: ציון <b>${s.score.toFixed(1)}</b> · נושאים ${s.TOP.toFixed(2)} · תכונות ${s.CHR.toFixed(2)}</div>
-    <div class="chips"><span class="chips-label">נושאים:</span>${D.topics.map((t,i)=>chip(t,s.St[i])).join('')}</div>
+    <div class="chips"><span class="chips-label">נושאים:</span>${topicChipsFiltered(s.St)}</div>
     <hr class="chips-divider">
     <div class="chips"><span class="chips-label">תכונות:</span>${D.traits.map((t,i)=>chip(t,s.Qc[i])).join('')}</div>
   </div>`;
@@ -316,7 +334,7 @@ function render(){
     tb.append(tr);
     const dr = document.createElement('tr'); dr.className='detail-row'; dr.style.display='none';
     dr.innerHTML = `<td></td><td colspan="4">
-      <div class="chips"><span class="chips-label">נושאים:</span>${D.topics.map((t,i)=>chip(t, r.St[i])).join('')}</div>
+      <div class="chips"><span class="chips-label">נושאים:</span>${topicChipsFiltered(r.St)}</div>
       <hr class="chips-divider">
       <div class="chips"><span class="chips-label">תכונות:</span>${D.traits.map((t,i)=>chip(t, r.Qc[i])).join('')}</div></td>`;
     tb.append(dr);
@@ -379,7 +397,10 @@ function renderDossier(id){
   document.getElementById('dossier-layout').classList.add('viewing');
   document.querySelectorAll('#dbuttons button').forEach(b=>b.classList.toggle('active', b.dataset.id==id));
   const view = document.getElementById('dossier-view');
-  mdRender(view, D.dossiers[id] || 'לא נמצא תיק.');
+  /* באתר מציגים שמות נושאים במקום קודי T; בקובצי ה-MD הקודים נשארים */
+  let md = D.dossiers[id] || 'לא נמצא תיק.';
+  md = md.replace(/T(10|[1-9])/g, (m,n)=>D.topics[parseInt(n,10)-1] || m);
+  mdRender(view, md);
   const c = candById(id);
   if (c) {
     const h1 = view.querySelector('h1');
