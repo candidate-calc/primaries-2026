@@ -1,10 +1,23 @@
 # -*- coding: utf-8 -*-
 # מייצר docs/data.js לאתר: דירוגים (מה-CSV) + תוכן קובצי ה-MD.
 import csv, json, os, glob, shutil
+from openpyxl import load_workbook
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS = os.path.join(BASE, 'docs')
 os.makedirs(DOCS, exist_ok=True)
+
+# ברירות המחדל של האתר = הפרמטרים השמורים בגיליון "פרמטרים" באקסל (מקור האמת)
+_pw = load_workbook(os.path.join(BASE, 'primaries-scoring.xlsx'), data_only=True)['פרמטרים']
+DEFAULTS = {
+    'wT':    [_pw.cell(4+k, 2).value for k in range(10)],
+    'wC':    [_pw.cell(16+k, 2).value for k in range(5)],
+    'alpha': [_pw.cell(23, 2+k).value for k in range(5)],
+    'gamma': [_pw.cell(26, 2+k).value for k in range(4)],
+    'lam':   _pw.cell(28, 2).value,
+    'beta':  _pw.cell(29, 2).value,
+}
+assert all(v is not None for v in DEFAULTS['wT'] + DEFAULTS['wC'] + DEFAULTS['alpha'] + DEFAULTS['gamma'] + [DEFAULTS['lam'], DEFAULTS['beta']])
 
 TOPICS = ["ביטחון וחטופים","דמוקרטיה ומשפט","דת ומדינה ושוויון בנטל","הסדרה ושלום",
           "שוויון אזרחי ושותפות","כלכלה עבודה ורווחה","חינוך ובריאות","סביבה ואקלים",
@@ -42,7 +55,7 @@ for i, fn in dossier_files.items():
 data = {
  'topics': TOPICS, 'traits': TRAITS, 'tdims': TDIMS, 'cdims': CDIMS,
  'candidates': cands,
- 'defaults': {'wT':[5]*10, 'wC':[5]*5, 'alpha':[1,1,2,3,2], 'gamma':[0.5,2,2,1.5], 'lam':0.7, 'beta':0.25},
+ 'defaults': DEFAULTS,
  'docs': docs, 'dossiers': dossiers,
  'meta': {'collected':'6.7.2026','vote':'20.7.2026'}
 }
