@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# מייצר docs/data.js לאתר: דירוגים (מה-CSV) + תוכן קובצי ה-MD.
+# מייצר docs/data.js לאתר: דירוגים (מה-CSV) + תוכן קובצי ה-MD + גרף המלצות (מ-endorsements.json).
 import csv, json, os, glob, shutil, re
 from datetime import datetime
 from openpyxl import load_workbook
@@ -19,6 +19,8 @@ DEFAULTS = {
     'beta':  _pw.cell(29, 2).value,
 }
 assert all(v is not None for v in DEFAULTS['wT'] + DEFAULTS['wC'] + DEFAULTS['alpha'] + DEFAULTS['gamma'] + [DEFAULTS['lam'], DEFAULTS['beta']])
+DEFAULTS['tierT'] = [1,2,2,1,1,1,1,1,1,1]
+DEFAULTS['tierC'] = [1,2,2,1,2]
 
 TOPICS = ["ביטחון וחטופים","דמוקרטיה ומשפט","דת ומדינה ושוויון בנטל","הסדרה ושלום",
           "שוויון אזרחי ושותפות","כלכלה עבודה ורווחה","חינוך ובריאות","סביבה ואקלים",
@@ -92,10 +94,32 @@ assert n == 1, f'ציפיתי למופע יחיד של "עודכן ב־" ב-READ
 with open(readme_path, 'w', encoding='utf-8') as f: f.write(readme_content)
 docs['README.md'] = readme_content
 
+# נתוני המלצות (endorsements): טעינה, חישוב משקלים, דה-דופ לפי זוג (from,to) והשארת המשקל המרבי.
+with open(os.path.join(BASE,'research','endorsements.json'), encoding='utf-8') as f:
+    raw_edges = json.load(f)
+
+B = {'endorse': 1.0, 'partner': 0.8, 'list': 0.6, 'event': 0.4}
+def edge_w(e):
+    return B[e['kind']] * (e['r'] / 5)
+
+best = {}
+for e in raw_edges:
+    key = (e['from'], e['to'])
+    if key not in best or edge_w(e) > edge_w(best[key]):
+        best[key] = e
+endorse = list(best.values())
+
+E = {j: 0.0 for j in range(1, 52)}
+for e in endorse:
+    E[e['to']] += edge_w(e)
+endorseRef = max(max(E.values()), 0.01)
+
 data = {
  'topics': TOPICS, 'traits': TRAITS, 'tdims': TDIMS, 'cdims': CDIMS,
  'candidates': cands,
  'defaults': DEFAULTS,
+ 'endorse': endorse,
+ 'endorseRef': endorseRef,
  'docs': docs, 'dossiers': dossiers,
  'meta': {'collected': LAST_UPDATED_DATE, 'updated': LAST_UPDATED_FULL, 'vote': '20.7.2026'}
 }
@@ -106,3 +130,4 @@ with open(os.path.join(DOCS,'data.js'),'w',encoding='utf-8') as f:
 
 shutil.copy2(os.path.join(BASE,'primaries-scoring.xlsx'), os.path.join(DOCS,'primaries-scoring.xlsx'))
 print('data.js written,', len(cands), 'candidates,', len(dossiers), 'dossiers')
+print('endorse edges: raw', len(raw_edges), '-> deduped', len(endorse))
