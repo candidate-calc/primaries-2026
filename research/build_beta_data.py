@@ -76,7 +76,7 @@ for r in trows:
                   'photo': photo, 'wiki': wiki, 'site': site})
 
 docs = {}
-for fn in ['01-plan.md','02-sources.md','03-topics-traits.md','04-scoring-method.md']:
+for fn in ['README.md','01-plan.md','02-sources.md','03-topics-traits.md','04-scoring-method.md']:
     with open(os.path.join(BASE,fn), encoding='utf-8') as f: docs[fn] = f.read()
 dossiers = {}
 for i, fn in dossier_files.items():
