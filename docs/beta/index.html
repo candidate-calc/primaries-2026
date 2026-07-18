@@ -537,7 +537,7 @@ function chipsBlock(c){
     <div class="chips"><span class="chips-label">תכונות:</span>${D.traits.map((t,i)=>chip(t,s.Qc[i])).join('')}</div>
   </div>`;
 }
-const ENDORSE_KIND_LABEL = {endorse:'תמיכה', partner:'שותפות', list:'רשימה משותפת', event:'אירוע משותף'};
+const ENDORSE_KIND_LABEL = {endorse:'תמיכה', partner:'שותפות', list:'רשימת המלצה משותפת', event:'אירוע משותף'};
 function creditLink(id){ const c = candById(id); return `<button class="namebtn credit-link" data-id="${id}">${c ? c.name : '#'+id}</button>`; }
 function creditsBlock(c){
   const edges = D.endorse || [];
