@@ -175,6 +175,9 @@
     #dossier-layout:not(.viewing) #dossier-content{display:none}
     #dossier-layout.viewing .doclist{display:none}
     .doclayout{grid-template-columns:1fr}
+    .drag-hint,.tier-title,.tier-hint{display:none}
+    .tag-gender{font-size:.6rem;gap:1px}
+    .tag-gender .tag-label{padding:0 1px}
   }
 </style>
 </head>
@@ -329,6 +332,7 @@ const TIER_META = {
 function makeTag(kind, i, label, tier){
   const tag = document.createElement('div');
   tag.className='tag'; tag.dataset.kind=kind; tag.dataset.i=i; tag.title=label;
+  if(label === 'מגדר ולהט"ב') tag.classList.add('tag-gender');
   const shortLabel = shortName(label, kind==='T' ? SHORT_TOPICS : SHORT_TRAITS);
   let html;
   if(tier===2)
@@ -525,6 +529,20 @@ function chipsBlock(c){
     <div class="chips"><span class="chips-label">תכונות:</span>${D.traits.map((t,i)=>chip(t,s.Qc[i])).join('')}</div>
   </div>`;
 }
+const ENDORSE_KIND_LABEL = {endorse:'תמיכה', partner:'שותפות', list:'רשימה משותפת', event:'אירוע משותף'};
+function creditLink(id){ const c = candById(id); return `<button class="namebtn credit-link" data-id="${id}">${c ? c.name : '#'+id}</button>`; }
+function creditsBlock(c){
+  const edges = D.endorse || [];
+  const inc = edges.filter(e=>e.to===c.id);
+  const out = edges.filter(e=>e.from===c.id);
+  if(!inc.length && !out.length) return '';
+  const line = e => `<li>${creditLink(e.from===c.id ? e.to : e.from)} <span class="note">(${ENDORSE_KIND_LABEL[e.kind]||e.kind})</span></li>`;
+  return `<div class="dossier-chips">
+    <div class="chips-label" style="display:block;margin-bottom:6px">קרדיטים</div>
+    ${inc.length ? `<div><b>ממליצים על ${c.name}:</b><ul style="margin:4px 0">${inc.map(line).join('')}</ul></div>` : ''}
+    ${out.length ? `<div><b>${c.name} ממליץ/ה על:</b><ul style="margin:4px 0">${out.map(line).join('')}</ul></div>` : ''}
+  </div>`;
+}
 
 /* ---------- render ranking ---------- */
 function evColor(ev){ return ev>=4 ? '#2e7d6b' : ev>=3 ? '#8a9a3d' : '#c07f30'; }
@@ -628,8 +646,9 @@ function renderDossier(id){
   const c = candById(id);
   if (c) {
     const h1 = view.querySelector('h1');
-    if (h1) h1.insertAdjacentHTML('afterend', chipsBlock(c));
+    if (h1) h1.insertAdjacentHTML('afterend', chipsBlock(c) + creditsBlock(c));
     if (c.photo) view.insertAdjacentHTML('afterbegin', `<img class="dphoto" src="../${c.photo}" alt="${c.name}">`);
+    view.querySelectorAll('.credit-link').forEach(b=>b.addEventListener('click', ()=>openDossier(parseInt(b.dataset.id,10))));
   }
   window.scrollTo({top:0, behavior:'instant'});
 }
