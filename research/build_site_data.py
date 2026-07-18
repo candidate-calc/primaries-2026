@@ -82,7 +82,7 @@ data = {
  'candidates': cands,
  'defaults': DEFAULTS,
  'docs': docs, 'dossiers': dossiers,
- 'meta': {'collected':'13.7.2026','vote':'20.7.2026'}
+ 'meta': {'collected':'18.7.2026','vote':'20.7.2026'}
 }
 with open(os.path.join(DOCS,'data.js'),'w',encoding='utf-8') as f:
     f.write('window.PRIMARIES_DATA = ')
