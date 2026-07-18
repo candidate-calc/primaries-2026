@@ -223,11 +223,12 @@
     </div>
     <div class="card">
       <h3>הדירוג לפי ההעדפות שלך <span id="warn" style="color:var(--bad);font-size:.8rem"></span></h3>
+      <div class="note" style="margin:2px 0 8px">סימון השריון משריין מועמד/ת בראש הרשימה — ומקפיץ בדירוג את המומלצים שלו/ה.</div>
       <table class="rank">
         <thead><tr><th class="anchcol"></th><th>#</th><th>מועמד/ת · ציון</th><th class="wide">נושאים</th><th class="wide">תכונות</th><th>ביסוס</th></tr></thead>
         <tbody id="rankbody"></tbody>
       </table>
-      <div class="note">לחיצה על שורה פותחת את פירוט הציונים; לחיצה על שם פותחת את התיק. ירוק = שמונת הראשונים (בפריימריז מצביעים ל־6–8). "ביסוס" = כמה המידע נשען על מקורות חיצוניים (5) לעומת עדות עצמית בלבד (1). סימון הסימנייה משריין מועמד/ת — הצבעה בטוחה שמקבעת אותו/ה בראש הרשימה עם ציון 100 ללא קשר לציון המחושב; ותמיכה או המלצה של מועמד/ת משוריין/ת נספרת כפול לזכות מי שהוא/היא תומך/ת בו.</div>
+      <div class="note">לחיצה על שורה פותחת את פירוט הציונים; לחיצה על שם פותחת את התיק. ירוק = שמונת הראשונים (בפריימריז מצביעים ל־6–8). "ביסוס" = כמה המידע נשען על מקורות חיצוניים (5) לעומת עדות עצמית בלבד (1). סימון הסימנייה משריין מועמד/ת — הצבעה בטוחה שמקבעת אותו/ה בראש הרשימה עם ציון 100; המלצה או תמיכה של משוריין/ת מקפיצה את ציון המומלץ/ת בגובה הפער שבין מקום 8 למקום 16 בדירוג, ומשני משוריינים או יותר — כפליים.</div>
     </div>
   </div>
 </section>
@@ -462,16 +463,12 @@ document.getElementById('btn-reset').addEventListener('click', ()=>{
 });
 
 /* ---------- scoring (מקביל לנוסחת האקסל) ---------- */
-/* בונוס גרף המלצות: משקל בסיס לפי סוג הקצה, משוקלל באמינות, מוכפל אם התומך משוריין */
+/* בונוס גרף המלצות: משקל בסיס לפי סוג הקצה, משוקלל באמינות */
 const B_KIND = {endorse:1.0, partner:0.8, list:0.6, event:0.4};
-const MU = 0.2; /* עוצמת בונוס ההמלצות (עד +5 נק' ללא שריון, עד +10 עם שריון תומכים) */
+const MU = 0.2; /* עוצמת בונוס ההמלצות הבסיסי (עד +5 נק') */
 const endorseEdges = (D.endorse||[]).map(e=>({from:e.from, to:e.to, w:B_KIND[e.kind]*(e.r/5)}));
-function endorseE(){
-  const anchored = new Set(state.anchors);
-  const E = {};
-  for(const e of endorseEdges){ E[e.to] = (E[e.to]||0) + e.w*(anchored.has(e.from)?2:1); }
-  return E;
-}
+const endorseEBase = {};
+for(const e of endorseEdges){ endorseEBase[e.to] = (endorseEBase[e.to]||0) + e.w; }
 function wavg(vals, weights){
   let s=0, w=0;
   for(let i=0;i<vals.length;i++){ s+=vals[i]*weights[i]; w+=weights[i]; }
@@ -491,17 +488,28 @@ function scoreAll(){
   let warn = (sumWT===0||sumWC===0) ? ' (אזהרה: כל המשקלים בקבוצה כלשהי הם 0)' : '';
   if(state.anchors.length>8) warn += ' (שיריינתם יותר מ-8 מועמדים)';
   document.getElementById('warn').textContent = warn;
-  const E = endorseE(), anchored = new Set(state.anchors);
+  const anchored = new Set(state.anchors);
   const rows = D.candidates.map(c=>{
     const r = calcOne(c, wT, wC, sumWT, sumWC);
-    r.bonus = MU * Math.min((E[c.id]||0)/D.endorseRef, 2);
+    r.bonus = MU * Math.min((endorseEBase[c.id]||0)/D.endorseRef, 2);
     r.Fp = r.F + r.bonus;
-    r.computedScore = Math.max(0,(r.Fp-1)/4*100);
-    r.anchored = anchored.has(c.id);
-    r.score = r.anchored ? 100 : r.computedScore;
+    r.baseScore = Math.max(0,(r.Fp-1)/4*100);
     return r;
   });
-  rows.sort((a,b)=> (a.anchored!==b.anchored) ? (a.anchored?-1:1) : (b.Fp - a.Fp));
+  /* קפיצת שריון: X = פער הציון בין מקום 8 למקום 16 בדירוג ללא שריונים.
+     המלצה ממשוריין אחד = +X נק', משני משוריינים או יותר = +2X */
+  const ladder = rows.map(r=>r.baseScore).sort((a,b)=>b-a);
+  const X = Math.max(0, ladder[7] - ladder[15]);
+  const backers = {};
+  for(const e of endorseEdges){ if(anchored.has(e.from)){ (backers[e.to] = backers[e.to]||new Set()).add(e.from); } }
+  rows.forEach(r=>{
+    const n = backers[r.c.id] ? backers[r.c.id].size : 0;
+    r.anchorBoost = X * Math.min(n, 2);
+    r.computedScore = r.baseScore + r.anchorBoost;
+    r.anchored = anchored.has(r.c.id);
+    r.score = r.anchored ? 100 : r.computedScore;
+  });
+  rows.sort((a,b)=> (a.anchored!==b.anchored) ? (a.anchored?-1:1) : (b.computedScore - a.computedScore));
   return rows;
 }
 function chip(label, s){
@@ -570,6 +578,7 @@ function render(){
     const dr = document.createElement('tr'); dr.className='detail-row'; dr.style.display='none';
     dr.innerHTML = `<td></td><td></td><td colspan="4">
       ${r.anchored ? `<div class="note" style="margin:0 0 6px">ציון מחושב ללא שריון: <b>${r.computedScore.toFixed(1)}</b></div>` : ''}
+      ${r.anchorBoost>0 ? `<div class="note" style="margin:0 0 6px">קפיצת שריון: <b>+${r.anchorBoost.toFixed(1)}</b> נק'</div>` : ''}
       <div class="chips"><span class="chips-label">נושאים:</span>${topicChipsFiltered(r.St)}</div>
       <hr class="chips-divider">
       <div class="chips"><span class="chips-label">תכונות:</span>${D.traits.map((t,i)=>chip(t, r.Qc[i])).join('')}</div></td>`;
