@@ -152,7 +152,7 @@
 <body>
 <header>
   <h1>הדמוקרטים 2026 — דירוג המועמדים</h1>
-  <div class="sub">ההצבעה: 20.7.2026 · בוחרים 6–8 מתוך 51 מועמדים · הנתונים עודכנו ב־18.7.2026 ·
+  <div class="sub">ההצבעה: 20.7.2026 · בוחרים 6–8 מתוך 51 מועמדים · הנתונים עודכנו ב־<span id="updated-stamp">18.7.2026</span> ·
     <a href="primaries-scoring.xlsx" style="color:#cde">הורדת גיליון האקסל</a> ·
     <a href="https://github.com/candidate-calc/primaries-2026" target="_blank" rel="noopener" style="color:#cde">קוד ונתונים ב־GitHub</a></div>
 </header>
@@ -226,13 +226,19 @@
 </main>
 <div id="hovercard" dir="rtl"></div>
 <footer>
-  הדירוגים המספריים הם שיפוט מנומק על בסיס מקורות מתויגי־אמינות (נכון ל־13.7.2026), לא מדידה אובייקטיבית.
+  הדירוגים המספריים הם שיפוט מנומק על בסיס מקורות מתויגי־אמינות (נכון ל־<span id="footer-updated">18.7.2026</span>), לא מדידה אובייקטיבית.
   הפרויקט המלא — כולל תוכנית הפעולה, מסגרת אמינות המקורות וכל תיקי המועמדים — זמין <a href="https://github.com/candidate-calc/primaries-2026" target="_blank" rel="noopener">בריפו ב־GitHub</a>.
 </footer>
 <script>
 const D = window.PRIMARIES_DATA;
 const LS_KEY = 'primaries-params-v1';
 const state = load() || structuredClone(D.defaults);
+
+/* חותמת "עודכן" — נלקחת מ-data.js, המחושב אוטומטית בכל ריצה של סקריפט הבנייה */
+if(D.meta){
+  const upd = document.getElementById('updated-stamp'); if(upd && D.meta.updated) upd.textContent = D.meta.updated;
+  const foot = document.getElementById('footer-updated'); if(foot && D.meta.collected) foot.textContent = D.meta.collected;
+}
 
 function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch(e){ return null; } }
 function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }

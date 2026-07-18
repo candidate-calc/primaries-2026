@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # מייצר docs/data.js לאתר: דירוגים (מה-CSV) + תוכן קובצי ה-MD.
-import csv, json, os, glob, shutil
+import csv, json, os, glob, shutil, re
+from datetime import datetime
 from openpyxl import load_workbook
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -71,18 +72,32 @@ for r in trows:
                   'photo': photo, 'wiki': wiki, 'site': site})
 
 docs = {}
-for fn in ['README.md','01-plan.md','02-sources.md','03-topics-traits.md','04-scoring-method.md']:
+for fn in ['01-plan.md','02-sources.md','03-topics-traits.md','04-scoring-method.md']:
     with open(os.path.join(BASE,fn), encoding='utf-8') as f: docs[fn] = f.read()
 dossiers = {}
 for i, fn in dossier_files.items():
     with open(os.path.join(BASE,'candidates',fn), encoding='utf-8') as f: dossiers[i] = f.read()
+
+# חותמת "עודכן לאחרונה" — מחושבת אוטומטית מזמן ריצת הסקריפט (זהו תהליך העדכון עצמו),
+# כדי שלא תישאר תאריך ישן בשוגג. נכתבת גם חזרה ל-README.md כדי שהריפו וה-Data.js יהיו תואמים.
+now = datetime.now()
+LAST_UPDATED_DATE = f'{now.day}.{now.month}.{now.year}'
+LAST_UPDATED_FULL = f'{LAST_UPDATED_DATE} {now.strftime("%H:%M:%S")}'
+
+readme_path = os.path.join(BASE, 'README.md')
+with open(readme_path, encoding='utf-8') as f: readme_content = f.read()
+readme_content, n = re.subn(r'עודכן(?: לאחרונה)? ב־\d{1,2}\.\d{1,2}\.\d{4}(?:,? \d{2}:\d{2}:\d{2})?',
+                             f'עודכן לאחרונה ב־{LAST_UPDATED_FULL}', readme_content)
+assert n == 1, f'ציפיתי למופע יחיד של "עודכן ב־" ב-README.md, נמצאו {n}'
+with open(readme_path, 'w', encoding='utf-8') as f: f.write(readme_content)
+docs['README.md'] = readme_content
 
 data = {
  'topics': TOPICS, 'traits': TRAITS, 'tdims': TDIMS, 'cdims': CDIMS,
  'candidates': cands,
  'defaults': DEFAULTS,
  'docs': docs, 'dossiers': dossiers,
- 'meta': {'collected':'18.7.2026','vote':'20.7.2026'}
+ 'meta': {'collected': LAST_UPDATED_DATE, 'updated': LAST_UPDATED_FULL, 'vote': '20.7.2026'}
 }
 with open(os.path.join(DOCS,'data.js'),'w',encoding='utf-8') as f:
     f.write('window.PRIMARIES_DATA = ')
